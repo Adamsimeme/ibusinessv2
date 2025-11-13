@@ -1,0 +1,157 @@
+# Render deployment configuration for iBusiness Backend
+# This file defines the services and configuration for deploying to Render.com
+
+services:
+  # Main backend API service
+  - type: web
+    name: ibusiness-backend
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    plan: starter
+    autoDeploy: false
+
+    # Environment variables
+    envVars:
+      # Node Environment
+      - key: NODE_ENV
+        value: production
+
+      # Server Configuration
+      - key: PORT
+        value: 10000
+
+      # Database Configuration
+      - key: MONGODB_URI
+        fromSecret: mongodb_uri
+
+      - key: MONGODB_TEST_URI
+        value: mongodb://127.0.0.1:27017/ibusiness_test
+
+      # Redis Configuration (optional)
+      - key: REDIS_HOST
+        value: localhost
+
+      - key: REDIS_PORT
+        value: 6379
+
+      - key: REDIS_PASSWORD
+        value: ""
+
+      # JWT Configuration
+      - key: JWT_SECRET
+        fromSecret: jwt_secret
+
+      - key: JWT_REFRESH_SECRET
+        fromSecret: jwt_refresh_secret
+
+      - key: JWT_EXPIRES_IN
+        value: 7d
+
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 30d
+
+      # Email Configuration
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+
+      - key: EMAIL_PORT
+        value: 587
+
+      - key: EMAIL_SECURE
+        value: false
+
+      - key: EMAIL_USER
+        fromSecret: email_user
+
+      - key: EMAIL_PASS
+        fromSecret: email_app_password
+
+      - key: EMAIL_FROM
+        value: "iBusiness.id <noreply@ibusiness.id>"
+
+      # Frontend URL for email links
+      - key: FRONTEND_URL
+        value: https://ibusiness-frontend.onrender.com
+
+      # Security Configuration
+      - key: CORS_ORIGIN
+        value: https://ibusiness-frontend.onrender.com,https://ibusiness.id
+
+      - key: SESSION_SECRET
+        fromSecret: session_secret
+
+      - key: CSRF_SECRET
+        fromSecret: csrf_secret
+
+      # File Upload Configuration
+      - key: FILE_UPLOAD_PATH
+        value: ./uploads
+
+      - key: MAX_FILE_SIZE
+        value: 5242880
+
+      - key: MAX_FILES_COUNT
+        value: 10
+
+      # Rate Limiting
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 900000
+
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: 100
+
+      # Logging Configuration
+      - key: LOG_LEVEL
+        value: info
+
+      - key: LOG_FILE_PATH
+        value: ./logs/app.log
+
+      # Other Configuration
+      - key: BCRYPT_ROUNDS
+        value: 12
+
+      - key: API_VERSION
+        value: v1
+
+      # DKIM Configuration (optional)
+      - key: DKIM_DOMAIN
+        value: ibusiness.id
+
+      - key: DKIM_SELECTOR
+        value: default
+
+      - key: DKIM_PRIVATE_KEY
+        fromSecret: dkim_private_key
+
+    # Health check configuration
+    healthCheckPath: /api/health
+    healthCheckTimeout: 300
+
+    # Disk space (for file uploads and logs)
+    disk:
+      name: ibusiness-disk
+      mountPath: /opt/render/project/src/uploads
+      sizeGB: 1
+
+  # Optional: Redis service for caching (if needed)
+  # - type: redis
+  #   name: ibusiness-redis
+  #   plan: starter
+  #   maxmemoryPolicy: allkeys-lru
+
+# Environment groups for different deployment stages
+environments:
+  - name: production
+    services:
+      - ibusiness-backend
+
+  - name: staging
+    services:
+      - ibusiness-backend
+    envVars:
+      - key: NODE_ENV
+        value: staging
+      - key: LOG_LEVEL
+        value: debug
